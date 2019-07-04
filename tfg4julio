@@ -1,0 +1,433 @@
+6 CÓDIGO
+// =========================================
+
+#include <Servo.h>
+#include <EEPROM.h>
+
+#define pinBotonD 2
+#define pinBotonC 3
+#define pinBotonS3 4
+#define pinBotonB3 7
+#define pinBotonS2 8
+#define pinBotonB2 11
+#define pinPteCalibracion 12
+
+#define PosPedal A4
+#define delta 800
+#define minPedal 0
+#define maxPedal 1023
+
+#define PosVolante A5
+#define minVolante 0
+#define maxVolante 1023
+#define alpha 383
+#define beta 639
+
+#define Servo2L 5
+#define Servo2R 6
+#define Servo3L 9
+#define Servo3R 10
+ 
+Servo s2L;
+Servo s2R;
+Servo s3L;
+Servo s3R;
+
+#define max2R 2200
+#define max2L 2200
+#define max3R 2200
+#define max3L 2200
+#define min2R 900
+#define min2L 900
+#define min3R 900
+#define min3L 900
+
+#define BufferSize   8
+
+// =========================================
+
+// Definición de valores iniciales preestablecidos de apertura
+int OPEN2L = 1460;
+int OPEN2R = 1610;
+int OPEN3L = 1460;
+int OPEN3R = 1610;
+
+#define CLOSE2L 1050
+#define CLOSE2R 2000
+#define CLOSE3L 940
+#define CLOSE3R 2100
+ 
+// Definición de variables
+int memoriaC[BufferSize]
+int memoriaS2[BufferSize]
+int memoriaB2[BufferSize]
+int memoriaS3[BufferSize]
+int memoriaB3[BufferSize]
+int contador = 0;
+int index = 0;
+int k = 0;
+int A = 0;
+int B = 0;
+bool FlagD = false;
+bool BotonDPulsado = false;
+bool BotonDPulsadoAnt = false;
+int BotonS2 = 0;
+int BotonB2 = 0;
+int BotonS3 = 0;
+int BotonB3 = 0;
+int BotonS2Ant = 0;
+int BotonB2Ant = 0;
+int BotonS3Ant = 0;
+int BotonB3Ant = 0;
+int posservo2L;
+int posservo2R;
+int posservo3L;
+int posservo3R;
+int puntero = 0;
+
+int Estado = 0;	// Estado=0-> CERRADO; Estado=1->ABIERTO;
+ 
+// Inicialización
+void setup()
+{
+  pinMode(pinBotonD, INPUT_PULLUP);
+  pinMode(pinBotonC, INPUT_PULLUP);
+  pinMode(PosPedal, INPUT_PULLUP);
+  pinMode(PosVolante, INPUT_PULLUP);
+  pinMode(pinPteCalibracion, INPUT_PULLUP);
+  pinMode(pinBotonS2, INPUT_PULLUP);
+  pinMode(pinBotonB2, INPUT_PULLUP);
+  pinMode(pinBotonS3, INPUT_PULLUP);
+  pinMode(pinBotonB3, INPUT_PULLUP);
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  s2L.attach(Servo2L);
+  s2R.attach(Servo2R);
+  s3L.attach(Servo3L);
+  s3R.attach(Servo3R);
+
+  puntero = 0;
+  EEPROM.get(puntero, posservo2L);
+  puntero += sizeof(int);
+  EEPROM.get(puntero, posservo2R);
+  puntero += sizeof(int);
+  EEPROM.get(puntero, posservo3L);
+  puntero += sizeof(int);
+  EEPROM.get(puntero, posservo3R);
+  puntero += sizeof(int);
+
+  puntero = 10;
+  EEPROM.get(puntero, OPEN2L);
+  puntero += sizeof(int);
+  EEPROM.get(puntero, OPEN2R);
+  puntero += sizeof(int);
+  EEPROM.get(puntero, OPEN3L);
+  puntero += sizeof(int);
+  EEPROM.get(puntero, OPEN3R);
+  puntero += sizeof(int);
+
+  saludo();
+
+  // Inicializar servos a posición cerrada
+  s2L.writeMicroseconds (CLOSE2L);
+  s2R.writeMicroseconds (CLOSE2R);
+  s3L.writeMicroseconds (CLOSE3L);
+  s3R.writeMicroseconds (CLOSE3R);
+  delay(1000);
+}
+
+// =========================================
+
+// Rutina SALUDO
+void saludo()
+{
+  s2L.writeMicroseconds (min2L);
+  s2R.writeMicroseconds (max2R);
+  s3L.writeMicroseconds (min3L);
+  s3R.writeMicroseconds (max3R);
+  delay(1000);
+  s3L.writeMicroseconds (max3L);
+  s3R.writeMicroseconds (min3R);
+  s2L.writeMicroseconds (max2L);
+  s2R.writeMicroseconds (min2R);
+  delay(1000);
+  s2L.writeMicroseconds (min2L);
+  s2R.writeMicroseconds (max2R);
+  delay(1000);
+  s3L.writeMicroseconds (min3L);
+  s3R.writeMicroseconds (max3R);
+  s2L.writeMicroseconds (max2L);
+  s2R.writeMicroseconds (min2R);
+  delay(1000);
+  s2L.writeMicroseconds (min2L);
+  s2R.writeMicroseconds (max2R);
+  delay (1000);
+}
+
+// =========================================
+
+// Rutina ANTI-REBOTES		
+void anti-rebotes()
+{
+    delay(25);
+    //----------------------------------------------------------
+    memoriaC[index] = digitalRead(pinBotonC);
+    contador = 0;
+    for (k=1, k<BufferSize , k++)		
+    {
+        if (memoriaC[k] == 1)   { contador += contador }
+    }
+    if (contador = BufferSize)   { BotonC = 0 }
+    contador = 0;
+    for (k=1, k<BufferSize , k++)		
+    {
+        if (memoriaC[k] == 0)   { contador += contador }
+    }
+    if (contador = BufferSize)   { BotonC = 1 }
+    //----------------------------------------------------------
+    memoriaS2[index] = digitalRead(pinBotonS2);
+    contador = 0;
+    for (k=1, k<BufferSize , k++)		
+    {
+        if (memoriaS2[k] == 1)   { contador += contador }
+    }
+    if (contador = BufferSize)   { BotonS2 = 0 }
+    contador = 0;
+    for (k=1, k<BufferSize , k++)		
+    {
+        if (memoriaS2[k] == 0)   { contador += contador }
+    }
+    if (contador = BufferSize)   { BotonS2 = 1 }
+    //----------------------------------------------------------
+    memoriaB2[index] = digitalRead(pinBotonB2);
+    contador = 0;
+    for (k=1, k<BufferSize , k++)		
+    {
+        if (memoriaB2[k] == 1)   { contador += contador }
+    }
+    if (contador = BufferSize)   { BotonB2 = 0 }
+    contador = 0;
+    for (k=1, k<BufferSize , k++)		
+    {
+        if (memoriaB2[k] == 0)   { contador += contador }
+    }
+    if (contador = BufferSize)   { BotonB2 = 1 }
+    //----------------------------------------------------------
+    memoriaS3[index] = digitalRead(pinBotonS3);
+    contador = 0;
+    for (k=1, k<BufferSize , k++)		
+    {
+        if (memoriaS3[k] == 1)   { contador += contador }
+    }
+    if (contador = BufferSize)   { BotonS3 = 0 }
+    contador = 0;
+    for (k=1, k<BufferSize , k++)		
+    {
+        if (memoriaS3[k] == 0)   { contador += contador }
+    }
+    if (contador = BufferSize)   { BotonS3 = 1 }
+    //----------------------------------------------------------
+    memoriaB3[index] = digitalRead(pinBotonB3);
+    contador = 0;
+    for (k=1, k<BufferSize , k++)		
+    {
+        if (memoriaB3[k] == 1)   { contador += contador }
+    }
+    if (contador = BufferSize)   { BotonB3 = 0 }
+    contador = 0;
+    for (k=1, k<BufferSize , k++)		
+    {
+        if (memoriaB3[k] == 0)   { contador += contador }
+    }
+    if (contador = BufferSize)   { BotonB3 = 1 }
+    //----------------------------------------------------------
+    index += index;
+    if (index > BufferSize)   { index = 1 }
+}
+
+// =========================================
+
+ 
+// Rutina de CALIBRACIÓN
+void calibracion()
+  {
+    if (BotonC) == 1)
+    {
+      if ((BotonS2 == 1) && (BotonS2Ant == 0))
+      {
+        posservo2L = digitalRead(Servo2L);
+        posservo2R = digitalRead(Servo2R);
+        if ((posservo2L + 10 <= max2L) && (posservo2R - 10 <= CLOSE2R))
+        {
+          posservo2L = posservo2L + 10;
+          posservo2R = posservo2R - 10;
+        }
+      }
+      if ((BotonB2 == 1) && (BotonB2Ant == 0))
+      {
+        posservo2L = digitalRead(Servo2L);
+        posservo2R = digitalRead(Servo2R);
+        if ((posservo2L - 10 <= CLOSE2L) && (posservo2R + 10 <= max2R))
+        {
+          posservo2L = posservo2L - 10;
+          posservo2R = posservo2R + 10;
+        }
+      }
+      if ((BotonS3 == 1) && (BotonS3Ant == 0))
+      {
+        posservo3L = digitalRead(Servo3L);
+        posservo3R = digitalRead(Servo3R);
+        if ((posservo3L + 10 <= max3L) && (posservo3R - 10 <= CLOSE3R))
+        {
+          posservo3L = posservo3L + 10;
+          posservo3R = posservo3R - 10;
+        }
+      }
+      if ((BotonB3 == 1) && (BotonB3Ant == 0))
+      {
+        posservo3L = digitalRead(Servo3L);
+        posservo3R = digitalRead(Servo3R);
+        if ((posservo3L - 10 <= CLOSE3L) && (posservo3R + 10 <= max3R))
+        {
+          posservo3L = posservo3L - 10;
+          posservo3R = posservo3R + 10;
+        }
+      }
+      puntero = 0;
+      EEPROM.put(puntero, posservo2L);
+      puntero += sizeof(int);
+      EEPROM.put(puntero, posservo2R);
+      puntero += sizeof(int);
+      EEPROM.put(puntero, posservo3L);
+      puntero += sizeof(int);
+      EEPROM.put(puntero, posservo3R);
+      puntero += sizeof(int);
+    }
+    else if (BotonC == 0)
+    {
+      OPEN2L = posservo2L;
+      OPEN2R = posservo2R;
+      OPEN3L = posservo3L;
+      OPEN3R = posservo3R;
+      puntero = 10;
+      EEPROM.put(puntero, OPEN2L);
+      puntero += sizeof(int);
+      EEPROM.put(puntero, OPEN2R);
+      puntero += sizeof(int);
+      EEPROM.put(puntero, OPEN3L);
+      puntero += sizeof(int);
+      EEPROM.put(puntero, OPEN3R);
+      puntero += sizeof(int);
+    }
+    BotonS2Ant = BotonS2;
+    BotonB2Ant = BotonB2;
+    BotonS3Ant = BotonS3;
+    BotonB3Ant = BotonB3;
+  }
+  else if (digitalRead(pinPteCalibracion) == 0)
+  {
+    if (digitalRead(pinBotonD) == 1)
+    {
+      if (FlagD == false)
+      {
+        A = millis();
+        FlagD = true;
+      }
+      B = millis();
+      if (B >= (A + 50))
+      {
+        BotonDPulsado = true;
+      }
+      else if (B < (A + 50))
+      {
+        BotonDPulsado = false;
+      }
+    }
+    else if (digitalRead(pinBotonD) == 0)
+    {
+      FlagD = false;
+      BotonDPulsado = false;
+    }
+    if ((Estado == 0) && ((BotonDPulsado = true) && (BotonDPulsadoAnt = false)) && (alpha <= analogRead(PosVolante) <= beta) && (analogRead(PosPedal) >= delta))
+    {
+      Estado = 1;
+      s2L.writeMicroseconds (OPEN2L);
+      s2R.writeMicroseconds (OPEN2R);
+      s3L.writeMicroseconds (OPEN3L);
+      s3R.writeMicroseconds (OPEN3R);
+      delay(1000);
+      BotonDPulsadoAnt = true;
+    }
+    if (((Estado == 1) && ((BotonDPulsado = true) && (BotonDPulsadoAnt = false)) && ((analogRead(PosVolante) < alpha))) || (analogRead(PosVolante > beta) && (analogRead(PosPedal) < delta)))
+    {
+      Estado = 0;
+      s2L.writeMicroseconds (CLOSE2L);
+      s2R.writeMicroseconds (CLOSE2R);
+      s3L.writeMicroseconds (CLOSE3L);
+      s3R.writeMicroseconds (CLOSE3R);
+      delay(1000);
+    }
+    BotonDPulsadoAnt = BotonDPulsado;
+  }
+
+// =========================================
+ 
+// Rutina CICLO
+void ciclo()
+  {
+    if (digitalRead(pinBotonD) == 1)
+    {
+      if (FlagD == false)
+      {
+        A = millis();     
+        FlagD = true;
+      }
+      B = millis();
+      if (B >= (A + 50))     { BotonDPulsado = true; }
+      else if (B < (A + 50))    { BotonDPulsado = false; }
+      }
+    }
+    else if (digitalRead(pinBotonD) == 0)
+    {
+      FlagD = false;
+      BotonDPulsado = false;
+    }
+    if ((Estado == 0) && ((BotonDPulsado = true) && (BotonDPulsadoAnt = false)) && (alpha <= analogRead(PosVolante) <= beta) && (analogRead(PosPedal) >= delta))
+    {
+      Estado = 1;
+      s2L.writeMicroseconds (OPEN2L);
+      s2R.writeMicroseconds (OPEN2R);
+      s3L.writeMicroseconds (OPEN3L);
+      s3R.writeMicroseconds (OPEN3R);
+      delay(1000);
+      BotonDPulsadoAnt = true;
+    }
+    if (((Estado == 1) && ((BotonDPulsado = true) && (BotonDPulsadoAnt = false)) && ((analogRead(PosVolante) < alpha))) || (analogRead(PosVolante > beta) && (analogRead(PosPedal) < delta)))
+    {
+      Estado = 0;
+      s2L.writeMicroseconds (CLOSE2L);
+      s2R.writeMicroseconds (CLOSE2R);
+      s3L.writeMicroseconds (CLOSE3L);
+      s3R.writeMicroseconds (CLOSE3R);
+      delay(1000);
+    }
+    BotonDPulsadoAnt = BotonDPulsado;
+  }
+
+// =========================================
+
+// Programa Principal
+void loop()
+{
+  if (digitalRead(pinPteCalibracion) == 1)
+  {
+	anti-rebotes;
+	calibracion
+  }
+else if (digitalRead(pinPteCalibracion) == 0)
+  {
+	ciclo
+  }
+}
+
+// =========================================

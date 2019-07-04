@@ -27,7 +27,7 @@
 #define Servo2R 6
 #define Servo3L 9
 #define Servo3R 10
- 
+
 Servo s2L;
 Servo s2R;
 Servo s3L;
@@ -56,37 +56,38 @@ int OPEN3R = 1610;
 #define CLOSE2R 2000
 #define CLOSE3L 940
 #define CLOSE3R 2100
- 
+
 // Definición de variables
-int memoriaC[BufferSize]
-int memoriaS2[BufferSize]
-int memoriaB2[BufferSize]
-int memoriaS3[BufferSize]
-int memoriaB3[BufferSize]
-int contador = 0;
-int index = 0;
+int memoriaC[BufferSize];
+int memoriaS2[BufferSize];
+int memoriaB2[BufferSize];
+int memoriaS3[BufferSize];
+int memoriaB3[BufferSize];
+int contador;
+int index;
 int k = 0;
-int A = 0;
-int B = 0;
-bool FlagD = false;
-bool BotonDPulsado = false;
-bool BotonDPulsadoAnt = false;
-int BotonS2 = 0;
-int BotonB2 = 0;
-int BotonS3 = 0;
-int BotonB3 = 0;
-int BotonS2Ant = 0;
-int BotonB2Ant = 0;
-int BotonS3Ant = 0;
-int BotonB3Ant = 0;
+int A;
+int B;
+bool FlagD;
+bool BotonDPulsado;
+bool BotonDPulsadoAnt;
+int BotonC;
+int BotonS2;
+int BotonB2;
+int BotonS3;
+int BotonB3;
+int BotonS2Ant;
+int BotonB2Ant;
+int BotonS3Ant;
+int BotonB3Ant;
 int posservo2L;
 int posservo2R;
 int posservo3L;
 int posservo3R;
 int puntero = 0;
 
-int Estado = 0;	// Estado=0-> CERRADO; Estado=1->ABIERTO;
- 
+int Estado; // Estado=0-> CERRADO; Estado=1->ABIERTO;
+
 // Inicialización
 void setup()
 {
@@ -126,7 +127,6 @@ void setup()
   EEPROM.get(puntero, OPEN3R);
   puntero += sizeof(int);
 
-  saludo();
 
   // Inicializar servos a posición cerrada
   s2L.writeMicroseconds (CLOSE2L);
@@ -136,6 +136,46 @@ void setup()
   delay(1000);
 }
 
+// =========================================
+
+//Rutina INICIALIZACIÓN VALORES
+void inicializacionvalores()
+{
+  int OPEN2L = 1460;
+  int OPEN2R = 1610;
+  int OPEN3L = 1460;
+  int OPEN3R = 1610;
+
+  int memoriaC[BufferSize];
+  int memoriaS2[BufferSize];
+  int memoriaB2[BufferSize];
+  int memoriaS3[BufferSize];
+  int memoriaB3[BufferSize];
+  int contador = 0;
+  int index = 0;
+
+  int A = 0;
+  int B = 0;
+  int BotonDPulsadoAnt = false;
+  int BotonS2 = 0;
+  int BotonB2 = 0;
+  int BotonS3 = 0;
+  int BotonB3 = 0;
+  int BotonS2Ant = 0;
+  int BotonB2Ant = 0;
+  int BotonS3Ant = 0;
+  int BotonB3Ant = 0;
+
+  int Estado = 0;
+  int FlagD = false;
+  int BotonDPulsado = false;
+  // Inicializar servos a posición cerrada
+  s2L.writeMicroseconds (CLOSE2L);
+  s2R.writeMicroseconds (CLOSE2R);
+  s3L.writeMicroseconds (CLOSE3L);
+  s3R.writeMicroseconds (CLOSE3R);
+  delay(1000);
+}
 // =========================================
 
 // Rutina SALUDO
@@ -166,92 +206,136 @@ void saludo()
 
 // =========================================
 
-// Rutina ANTI-REBOTES		
-void anti-rebotes()
+// Rutina ANTI-REBOTES
+void antirebotes()
 {
-    delay(25);
-    //----------------------------------------------------------
-    memoriaC[index] = digitalRead(pinBotonC);
-    contador = 0;
-    for (k=1, k<BufferSize , k++)		
-    {
-        if (memoriaC[k] == 1)   { contador += contador }
+  delay(25);
+  //----------------------------------------------------------
+  memoriaC[index] = digitalRead(pinBotonC);
+  contador = 0;
+  for (k = 1; k < BufferSize ; k++)
+  {
+    if (memoriaC[k] == 1)   {
+      contador += contador;
     }
-    if (contador = BufferSize)   { BotonC = 0 }
-    contador = 0;
-    for (k=1, k<BufferSize , k++)		
-    {
-        if (memoriaC[k] == 0)   { contador += contador }
+  }
+  if (contador = BufferSize)   {
+    BotonC = 0;
+  }
+  contador = 0;
+  for (k = 1; k < BufferSize ; k++)
+  {
+    if (memoriaC[k] == 0)   {
+      contador += contador;
     }
-    if (contador = BufferSize)   { BotonC = 1 }
-    //----------------------------------------------------------
-    memoriaS2[index] = digitalRead(pinBotonS2);
-    contador = 0;
-    for (k=1, k<BufferSize , k++)		
-    {
-        if (memoriaS2[k] == 1)   { contador += contador }
+  }
+  if (contador = BufferSize)   {
+    BotonC = 1;
+  }
+  //----------------------------------------------------------
+  memoriaS2[index] = digitalRead(pinBotonS2);
+  contador = 0;
+  for (k = 1; k < BufferSize ; k++)
+  {
+    if (memoriaS2[k] == 1)   {
+      contador += contador;
     }
-    if (contador = BufferSize)   { BotonS2 = 0 }
-    contador = 0;
-    for (k=1, k<BufferSize , k++)		
-    {
-        if (memoriaS2[k] == 0)   { contador += contador }
+  }
+  if (contador = BufferSize)   {
+    BotonS2 = 0;
+  }
+  contador = 0;
+  for (k = 1; k < BufferSize ; k++)
+  {
+    if (memoriaS2[k] == 0)   {
+      contador += contador;
     }
-    if (contador = BufferSize)   { BotonS2 = 1 }
-    //----------------------------------------------------------
-    memoriaB2[index] = digitalRead(pinBotonB2);
-    contador = 0;
-    for (k=1, k<BufferSize , k++)		
-    {
-        if (memoriaB2[k] == 1)   { contador += contador }
+  }
+  if (contador = BufferSize)   {
+    BotonS2 = 1;
+  }
+  //----------------------------------------------------------
+  memoriaB2[index] = digitalRead(pinBotonB2);
+  contador = 0;
+  for (k = 1; k < BufferSize ; k++)
+  {
+    if (memoriaB2[k] == 1)   {
+      contador += contador;
     }
-    if (contador = BufferSize)   { BotonB2 = 0 }
-    contador = 0;
-    for (k=1, k<BufferSize , k++)		
-    {
-        if (memoriaB2[k] == 0)   { contador += contador }
+  }
+  if (contador = BufferSize)   {
+    BotonB2 = 0;
+  }
+  contador = 0;
+  for (k = 1; k < BufferSize ; k++)
+  {
+    if (memoriaB2[k] == 0)   {
+      contador += contador;
     }
-    if (contador = BufferSize)   { BotonB2 = 1 }
-    //----------------------------------------------------------
-    memoriaS3[index] = digitalRead(pinBotonS3);
-    contador = 0;
-    for (k=1, k<BufferSize , k++)		
-    {
-        if (memoriaS3[k] == 1)   { contador += contador }
+  }
+  if (contador = BufferSize)   {
+    BotonB2 = 1;
+  }
+  //----------------------------------------------------------
+  memoriaS3[index] = digitalRead(pinBotonS3);
+  contador = 0;
+  for (k = 1; k < BufferSize ; k++)
+  {
+    if (memoriaS3[k] == 1)   {
+      contador += contador;
     }
-    if (contador = BufferSize)   { BotonS3 = 0 }
-    contador = 0;
-    for (k=1, k<BufferSize , k++)		
-    {
-        if (memoriaS3[k] == 0)   { contador += contador }
+  }
+  if (contador = BufferSize)   {
+    BotonS3 = 0;
+  }
+  contador = 0;
+  for (k = 1; k < BufferSize ; k++)
+  {
+    if (memoriaS3[k] == 0)   {
+      contador += contador;
     }
-    if (contador = BufferSize)   { BotonS3 = 1 }
-    //----------------------------------------------------------
-    memoriaB3[index] = digitalRead(pinBotonB3);
-    contador = 0;
-    for (k=1, k<BufferSize , k++)		
-    {
-        if (memoriaB3[k] == 1)   { contador += contador }
+  }
+  if (contador = BufferSize)   {
+    BotonS3 = 1;
+  }
+  //----------------------------------------------------------
+  memoriaB3[index] = digitalRead(pinBotonB3);
+  contador = 0;
+  for (k = 1; k < BufferSize ; k++)
+  {
+    if (memoriaB3[k] == 1)   {
+      contador += contador;
     }
-    if (contador = BufferSize)   { BotonB3 = 0 }
-    contador = 0;
-    for (k=1, k<BufferSize , k++)		
-    {
-        if (memoriaB3[k] == 0)   { contador += contador }
+  }
+  if (contador = BufferSize)   {
+    BotonB3 = 0;
+  }
+  contador = 0;
+  for (k = 1; k < BufferSize ; k++)
+  {
+    if (memoriaB3[k] == 0)   {
+      contador += contador;
     }
-    if (contador = BufferSize)   { BotonB3 = 1 }
-    //----------------------------------------------------------
-    index += index;
-    if (index > BufferSize)   { index = 1 }
+  }
+  if (contador = BufferSize)   {
+    BotonB3 = 1;
+  }
+  //----------------------------------------------------------
+  index += index;
+  if (index > BufferSize)   {
+    index = 1;
+  }
 }
 
 // =========================================
 
- 
+
 // Rutina de CALIBRACIÓN
 void calibracion()
+{
+  if (digitalRead(pinPteCalibracion) == 1)
   {
-    if (BotonC) == 1)
+    if ((BotonC) == 1)
     {
       if ((BotonS2 == 1) && (BotonS2Ant == 0))
       {
@@ -369,29 +453,36 @@ void calibracion()
     }
     BotonDPulsadoAnt = BotonDPulsado;
   }
+}
+  // =========================================
 
-// =========================================
- 
-// Rutina CICLO
-void ciclo()
+  // Rutina CICLO
+  void ciclo()
   {
     if (digitalRead(pinBotonD) == 1)
     {
       if (FlagD == false)
       {
-        A = millis();     
+        A = millis();
         FlagD = true;
       }
       B = millis();
-      if (B >= (A + 50))     { BotonDPulsado = true; }
-      else if (B < (A + 50))    { BotonDPulsado = false; }
+      if (B >= (A + 50))
+      {
+        BotonDPulsado = true;
+      }
+      else if (B < (A + 50))
+      {
+        BotonDPulsado = false;
       }
     }
+
     else if (digitalRead(pinBotonD) == 0)
     {
       FlagD = false;
       BotonDPulsado = false;
     }
+  
     if ((Estado == 0) && ((BotonDPulsado = true) && (BotonDPulsadoAnt = false)) && (alpha <= analogRead(PosVolante) <= beta) && (analogRead(PosPedal) >= delta))
     {
       Estado = 1;
@@ -412,21 +503,23 @@ void ciclo()
       delay(1000);
     }
     BotonDPulsadoAnt = BotonDPulsado;
-  }
-
+}
 // =========================================
 
 // Programa Principal
 void loop()
 {
+  inicializacionvalores();
+  saludo();
+
   if (digitalRead(pinPteCalibracion) == 1)
   {
-	anti-rebotes;
-	calibracion
+    antirebotes();
+    calibracion();
   }
-else if (digitalRead(pinPteCalibracion) == 0)
+  else if (digitalRead(pinPteCalibracion) == 0)
   {
-	ciclo
+    ciclo();
   }
 }
 
